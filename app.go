@@ -10,9 +10,42 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/go-httpproxy/httpproxy"
 )
 
 var logErr = log.New(os.Stderr, "ERR: ", log.LstdFlags)
+
+func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr error) {
+	// Log errors.
+	logErr.Printf("%s: %s [%s]", where, err, opErr)
+}
+
+func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
+	// Handle local request has path "/info"
+	if r.Method == "GET" && !r.URL.IsAbs() && r.URL.Path == "/info" {
+		w.Write([]byte("This is go-httpproxy-wrapper."))
+		return true
+	}
+	return false
+}
+
+func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.ConnectAction, newHost string) {
+	// Apply "Man in the Middle" to all ssl connections. Never change host.
+	return httpproxy.ConnectMitm, host
+}
+
+func OnRequest(ctx *httpproxy.Context, req *http.Request) (resp *http.Response) {
+	// Log proxying requests.
+	log.Printf("INFO: Proxy %d %d: %s %s", ctx.SessionNo, ctx.SubSessionNo, req.Method, req.URL.String())
+	return
+}
+
+func OnResponse(ctx *httpproxy.Context, req *http.Request,
+	resp *http.Response) {
+	// Add header "Via: go-httpproxy-wrapper".
+	resp.Header.Add("Via", "web-proxy-server")
+}
 
 func main() {
 	//TODO: Hay que conectarse a la DB para obtener información
@@ -42,19 +75,19 @@ func main() {
 	proxy.OnResponse = OnResponse
 	//proxy.MitmChunked = false
 
-	server := &http.Server{
+	httpd := &http.Server{
 		Addr:         ":8081",
 		Handler:      proxy,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
 	}
 	listenErrChan := make(chan error)
 	go func() {
-		listenErrChan <- server.ListenAndServe()
+		listenErrChan <- httpd.ListenAndServe()
 	}()
-	log.Printf("Listening HTTP in %s", server.Addr)
+	log.Printf("Listening HTTP in %s", httpd.Addr)
 
 	cert, _ := tls.X509KeyPair(httpproxy.DefaultCaCert, httpproxy.DefaultCaKey)
-	serverHTTPS := &http.Server{
+	httpsd := &http.Server{
 		Addr:         ":8443",
 		Handler:      proxy,
 		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler)),
@@ -73,9 +106,9 @@ func main() {
 	}
 	listenHTTPSErrChan := make(chan error)
 	go func() {
-		listenHTTPSErrChan <- serverHTTPS.ListenAndServeTLS("", "")
+		listenHTTPSErrChan <- httpsd.ListenAndServeTLS("", "")
 	}()
-	log.Printf("Listening HTTPS in %s", serverHTTPS.Addr)
+	log.Printf("Listening HTTPS in %s", httpsd.Addr)
 
 
 mainloop:
