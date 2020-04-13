@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func (c *Couchbase)GetConnectionsCountByIpSuccessful(ip string, ipDest string) (int64, bool) {
-	hs, error := c.getHostStatistics(ip)
+func (c *Couchbase) GetConnectionsCountByIpSuccessful(ip string, ipDest string) (int64, bool) {
+	hs, error := c.GetHostStatistics(ip)
 	if error != nil {
 		return 0, false
 	}
@@ -21,8 +21,8 @@ func (c *Couchbase)GetConnectionsCountByIpSuccessful(ip string, ipDest string) (
 	return 0, false
 }
 
-func (c *Couchbase)GetConnectionsCountByIp(ip string, ipDest string) (int64, bool) {
-	hs, error := c.getHostStatistics(ip)
+func (c *Couchbase) GetConnectionsCountByIp(ip string, ipDest string) (int64, bool) {
+	hs, error := c.GetHostStatistics(ip)
 	if error != nil {
 		return 0, false
 	}
@@ -36,8 +36,8 @@ func (c *Couchbase)GetConnectionsCountByIp(ip string, ipDest string) (int64, boo
 	return 0, false
 }
 
-func (c *Couchbase)GetConnectionsCountByPathSuccessful(ip string, pathDest string) (int64, bool) {
-	hs, error := c.getHostStatistics(ip)
+func (c *Couchbase) GetConnectionsCountByPathSuccessful(ip string, pathDest string) (int64, bool) {
+	hs, error := c.GetHostStatistics(ip)
 	if error != nil {
 		return 0, false
 	}
@@ -51,8 +51,8 @@ func (c *Couchbase)GetConnectionsCountByPathSuccessful(ip string, pathDest strin
 	return 0, false
 }
 
-func (c *Couchbase)GetConnectionsCountByPath(ip string, pathDest string) (int64, bool) {
-	hs, error := c.getHostStatistics(ip)
+func (c *Couchbase) GetConnectionsCountByPath(ip string, pathDest string) (int64, bool) {
+	hs, error := c.GetHostStatistics(ip)
 	if error != nil {
 		return 0, false
 	}
@@ -66,8 +66,8 @@ func (c *Couchbase)GetConnectionsCountByPath(ip string, pathDest string) (int64,
 	return 0, false
 }
 
-func (c *Couchbase)GetConnectionsCount(ip string) (int64, error) {
-	hs, error := c.getHostStatistics(ip)
+func (c *Couchbase) GetConnectionsCount(ip string) (int64, error) {
+	hs, error := c.GetHostStatistics(ip)
 	if error != nil {
 		return 0, error
 	}
@@ -75,7 +75,7 @@ func (c *Couchbase)GetConnectionsCount(ip string) (int64, error) {
 	return hs.Successful + hs.Rejected, nil
 }
 
-func (c *Couchbase)getHostStatistics(ip string) (HostStatistic, error) {
+func (c *Couchbase) GetHostStatistics(ip string) (HostStatistic, error) {
 	var collection = c.buckets["proxy_statistics"].DefaultCollection()
 	resultGet, error := collection.Get("statistic_"+ip, &gocb.GetOptions{})
 	if error != nil {
@@ -93,7 +93,7 @@ func (c *Couchbase)getHostStatistics(ip string) (HostStatistic, error) {
 	return hostStatistics, nil
 }
 
-func (c *Couchbase)UpdateIpCounter(ip string, ipDest string, successful bool) (bool, error){
+func (c *Couchbase) UpdateIpCounter(ip string, ipDest string, successful bool) (bool, error){
 	return c.updateStatistics(ip, func(hs HostStatistic) HostStatistic {
 		hosts := hs.Hosts
 		index:=0
@@ -116,7 +116,7 @@ func (c *Couchbase)UpdateIpCounter(ip string, ipDest string, successful bool) (b
 	})
 }
 
-func (c *Couchbase)UpdatePathCounter(ip string, pathDest string, successful bool) (bool, error){
+func (c *Couchbase) UpdatePathCounter(ip string, pathDest string, successful bool) (bool, error){
 	return c.updateStatistics(ip, func(hs HostStatistic) HostStatistic {
 		paths := hs.Paths
 		index:=0
@@ -142,7 +142,7 @@ type Params struct {
 	Increment bool
 }
 
-func (c *Couchbase)updateStatistics (ip string, update func(hs HostStatistic) HostStatistic, args ...interface{}) (bool, error){
+func (c *Couchbase) updateStatistics (ip string, update func(hs HostStatistic) HostStatistic, args ...interface{}) (bool, error){
 
 	var collection = c.buckets["proxy_statistics"].DefaultCollection()
 	var document = "statistic_"+ip

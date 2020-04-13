@@ -21,10 +21,25 @@ type HostConfiguration struct{
 	Paths			[]PathConfig	`json:"paths"`
 }
 
-type Blacklist struct {
-	Ip 				[]string		`json:"ip"`
+func (hc HostConfiguration) MaxConnectionByIp(destIp string) (int64, bool) {
+	for _, host := range hc.Hosts {
+		if host.Ip == destIp && host.Active == true {
+			return host.MaxCalls, true
+		}
+	}
+	return 0, false
 }
 
-func (h *HostConfiguration) isInvalid() bool{
-	return reflect.DeepEqual(&HostConfiguration{}, h)
+func (hc HostConfiguration) MaxConnectionByPath(destPath string) (int64, bool) {
+	for _, host := range hc.Paths {
+		if host.Path == destPath && host.Active == true {
+			return host.MaxCalls, true
+		}
+	}
+
+	return 0, false
+}
+
+func (hc *HostConfiguration) isInvalid() bool{
+	return reflect.DeepEqual(&HostConfiguration{}, hc)
 }

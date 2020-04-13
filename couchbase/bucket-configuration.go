@@ -6,7 +6,7 @@ import (
 )
 
 func (c *Couchbase)GetConfigurationMaxConnectionByPath (ip string, path string) (int64, bool) {
-	hc, error := c.getConfiguration(ip)
+	hc, error := c.GetConfiguration(ip)
 	if error != nil {
 		log.Print(error)
 		return 0, false
@@ -21,8 +21,8 @@ func (c *Couchbase)GetConfigurationMaxConnectionByPath (ip string, path string) 
 	return 0, false
 }
 
-func (c *Couchbase)GetConfigurationMaxConnectionByIP (ip string, ipDesc string) (int64, bool) {
-	hc, error := c.getConfiguration(ip)
+func (c *Couchbase) GetConfigurationMaxConnectionByIP (ip string, ipDesc string) (int64, bool) {
+	hc, error := c.GetConfiguration(ip)
 	if error != nil {
 		log.Print(error)
 		return 0, false
@@ -37,7 +37,7 @@ func (c *Couchbase)GetConfigurationMaxConnectionByIP (ip string, ipDesc string) 
 	return 0, false
 }
 
-func (c *Couchbase)getConfiguration(ip string) (HostConfiguration, error){
+func (c *Couchbase) GetConfiguration(ip string) (HostConfiguration, error){
 	var hostConfiguration HostConfiguration
 
 	result, error := c.buckets["proxy_config"].DefaultCollection().Get("host_"+ip, &gocb.GetOptions{})
@@ -54,37 +54,20 @@ func (c *Couchbase)getConfiguration(ip string) (HostConfiguration, error){
 	return hostConfiguration, nil
 }
 
-func (c *Couchbase)GetBlackList() ([]string, error){
+func (c *Couchbase) GetBlacklist() (Blacklist, error){
 
 	var blacklist Blacklist
 
 	result, error := c.buckets["proxy_config"].DefaultCollection().Get("blacklist", &gocb.GetOptions{})
 	if error != nil {
 		log.Print(error)
-		return []string{}, error
+		return Blacklist{}, error
 	}
 
 	error =  result.Content(&blacklist)
 	if error != nil {
-		return []string{}, error
+		return Blacklist{}, error
 	}
 
-	return blacklist.Ip, error
-}
-
-func (c *Couchbase)IsInBlackList(ip string) bool{
-	if blacklist, error := c.GetBlackList(); error == nil && contains(blacklist, ip) {
-		return true
-	}
-	return false
-}
-
-// Contains tells whether a contains x.
-func contains(a []string, x string) bool {
-	for _, n := range a {
-		if x == n {
-			return true
-		}
-	}
-	return false
+	return blacklist, error
 }

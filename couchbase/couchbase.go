@@ -2,7 +2,7 @@ package couchbase
 
 import (
 	gocb "github.com/couchbase/gocb/v2"
-	"log"
+	"os"
 	"sync"
 )
 
@@ -28,8 +28,8 @@ func newCouchbase() (*Couchbase, error){
 	cluster, error := gocb.Connect(
 		"couchbase://localhost",
 		gocb.ClusterOptions{
-			Username: "admin",
-			Password: "a1d2m3i4n5",
+			Username: envVariable("COUCHBASE_USER", "admin"),
+			Password: envVariable("COUCHBASE_PASS", "a1d2m3i4n5"),
 		})
 	if error != nil {
 		panic(error)
@@ -46,9 +46,15 @@ func newCouchbase() (*Couchbase, error){
 
 func (c *Couchbase) addBucket(bucket string) {
 	c.buckets[bucket] = c.cluster.Bucket(bucket)
-	log.Print("Bucket %s was added", bucket)
 }
 
+func envVariable(key string, defaultValue string) string {
+	value := os.Getenv(key)
+	if value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 func TestConfiguration() {
 

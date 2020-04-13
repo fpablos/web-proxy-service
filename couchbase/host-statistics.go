@@ -44,3 +44,23 @@ func (t *Time) UnmarshalJSON(data []byte) (err error) {
 	*t = Time{tt}
 	return
 }
+
+func (hs HostStatistic) ConnectionsCountByIpSuccessful(destIp string) (int64, bool) {
+	for _, host := range hs.Hosts {
+		if host.Ip == destIp {
+			return host.Successful, true
+		}
+	}
+
+	return 0, false
+}
+
+func (hs HostStatistic) ConnectionsCountByPathSuccessful (destPath string) (int64, bool) {
+	for _, path := range hs.Paths {
+		if path.Path == destPath {
+			return path.Successful, true
+		}
+	}
+
+	return 0, false
+}
