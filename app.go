@@ -21,7 +21,7 @@ func envVariable(key string, defaultValue string) string {
 }
 
 func main() {
-	host := envVariable("HOST", "")
+	host := envVariable("HOST", "0.0.0.0")
 	httpPort := envVariable("HTTP_PORT", "8081" )
 	httpsPort := envVariable( "HTTPS_PORT", "8443")
 
