@@ -151,8 +151,11 @@ func (c *Couchbase) updateStatistics (ip string, update func(hs HostStatistic) H
 	if error != nil {
 		log.Print(error)
 		if resultLock == nil {
+			hostStatistic := HostStatistic{}
+			hostStatistic.Ip = ip
+
 			//Create the document
-			_, error = collection.Insert(document, HostStatistic{}, nil)
+			_, error = collection.Insert(document, hostStatistic, nil)
 			if error != nil {
 				return false, error
 			}
