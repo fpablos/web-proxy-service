@@ -2,15 +2,17 @@ package proxy_wrapper
 
 import (
 	"crypto/tls"
-	"github.com/fpablos/web-proxy-service/filter-chain"
-	"github.com/go-httpproxy/httpproxy"
+	"github.com/fpablos/httpproxy"
+	"github.com/fpablos/web-proxy-service/couchbase"
+	filter_chain "github.com/fpablos/web-proxy-service/filter-chain"
 	"log"
 	"net/http"
 	"os"
 	s "strings"
 )
 
-var logErr = log.New(os.Stderr, "ERR: ", log.LstdFlags)
+var db = couchbase.GetInstance()
+var logErr = log.New(os.Stderr, "", log.LstdFlags)
 
 func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr error) {
 	// Log errors.
@@ -20,17 +22,30 @@ func OnError(ctx *httpproxy.Context, where string, err *httpproxy.Error, opErr e
 func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bool {
 	//Avoid the direct request to proxy server
 	if !r.URL.IsAbs() {
-		r.Host = "api.mercadolibre.com"
-		r.URL.Host = "api.mercadolibre.com"
-
 		return false
 	}
 
-	blacklistFilter		:= filter_chain.BlacklistFilter{r, &w}
-	byIpPathFilter 		:= filter_chain.ByIpPathFilter{r, &w}
-	byIpFilter 			:= filter_chain.ByIpFilter{r, &w}
-	byPathFilter 		:= filter_chain.ByPathFilter{r, &w}
-	logProxedRequest	:= filter_chain.LogProxedRequest{r, &w}
+	originIP := filter_chain.GetIp(r)
+	destIp := filter_chain.GetHostIp(r)
+	pathDest := filter_chain.GetPath(r)
+
+	bl, error := db.GetBlacklist()
+
+	hc, error := db.GetConfiguration(originIP)
+
+	// If configuration is missing for origin, it is denied by default
+	if error != nil {
+		return true
+	}
+
+	hs, _ := db.GetHostStatistics(originIP)
+
+	// Filter chain creation
+	blacklistFilter		:= filter_chain.BlacklistFilter{r, &w, destIp, originIP, pathDest, bl}
+	byIpPathFilter 		:= filter_chain.ByIpPathFilter{r, &w, destIp, originIP, pathDest, hc, hs}
+	byIpFilter 			:= filter_chain.ByIpFilter{r, &w, destIp, originIP, pathDest, hc, hs}
+	byPathFilter 		:= filter_chain.ByPathFilter{r, &w, destIp, originIP, pathDest, hc, hs}
+	logProxedRequest	:= filter_chain.LogProxedRequest{r, &w, destIp, originIP, pathDest}
 
 	filter := filter_chain.New()
 	filter.AddFilter(&blacklistFilter)
@@ -39,7 +54,13 @@ func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bo
 	filter.AddFilter(&byPathFilter)
 	filter.AddFilter(&logProxedRequest)
 
-	return filter.Execute()
+	// Filter chain execution
+	if filter.Execute() {
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte("403 - You don't have permission"))
+		return true
+	}
+	return false
 }
 
 func OnConnect(ctx *httpproxy.Context, host string) (ConnectAction httpproxy.ConnectAction, newHost string) {
@@ -74,7 +95,8 @@ func createDeafaultProxy() (*httpproxy.Proxy, error) {
 	proxy.OnConnect = OnConnect
 	proxy.OnRequest = OnRequest
 	proxy.OnResponse = OnResponse
-	//proxy.MitmChunked = false
+
+	proxy.DefaultRedirectHost = "https://api.mercadolibre.com"
 
 	return proxy, err
 }
