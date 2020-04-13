@@ -1,24 +1,30 @@
 package filter_chain
 
 import (
+	"github.com/fpablos/web-proxy-service/couchbase"
 	"log"
 	"net/http"
 )
 
 type ByPathFilter struct {
-	R *http.Request
-	W *http.ResponseWriter
+	R        *http.Request
+	W        *http.ResponseWriter
+	DestIP   string
+	OriginIP string
+	DestPath string
+	HC		 couchbase.HostConfiguration
+	HS		 couchbase.HostStatistic
 }
 
 func (f *ByPathFilter) Execute(chain *Chain, args ...interface{}) bool{
-	requestIp := getIp(f.R)
-	destPath := getPath(f.R)
+	requestIp := f.OriginIP
+	destPath := f.DestPath
 
-	if maxConnections, status := db.GetConfigurationMaxConnectionByPath(requestIp, destPath); status {
+	if maxConnections, status := f.HC.MaxConnectionByPath(destPath); status {
 
-		if currentCountConnections, _ := db.GetConnectionsCountByPath(requestIp, destPath); maxConnections >= currentCountConnections  {
+		if currentCountConnections, _ := f.HS.ConnectionsCountByPathSuccessful(destPath); maxConnections >= currentCountConnections  {
 
-			log.Print("Se bloqueo la conexión por superar el máximo permitido para la ruta: " + destPath + "a la IP " + requestIp)
+n			log.Print("Se bloqueo la conexión por superar el máximo permitido para la ruta: " + destPath + "a la IP " + requestIp)
 
 			_, error := db.UpdatePathCounter(requestIp, destPath, false)
 			if error != nil {
