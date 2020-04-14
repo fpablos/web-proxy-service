@@ -147,7 +147,7 @@ func (c *Couchbase) updateStatistics (ip string, update func(hs HostStatistic) H
 	var collection = c.buckets["proxy_statistics"].DefaultCollection()
 	var document = "statistic_"+ip
 
-	resultLock, error := collection.GetAndLock(document, 5*time.Second, &gocb.GetAndLockOptions{})
+	resultLock, error := collection.GetAndLock(document, time.Second, &gocb.GetAndLockOptions{})
 	if error != nil {
 		log.Print(error)
 		if resultLock == nil {

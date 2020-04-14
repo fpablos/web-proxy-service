@@ -26,7 +26,7 @@ func newCouchbase() (*Couchbase, error){
 	couchbase := &Couchbase{}
 
 	cluster, error := gocb.Connect(
-		"couchbase://couchbase",
+		"couchbase://couchbase_db",
 		gocb.ClusterOptions{
 			Username: envVariable("COUCHBASE_USER", "admin"),
 			Password: envVariable("COUCHBASE_PASS", "a1d2m3i4n5"),

@@ -20,8 +20,6 @@ func (f BlacklistFilter) Execute(chain *Chain, args ...interface{}) bool{
 	requestIp := f.OriginIP
 	destIp := f.DestIP
 
-	log.Printf("Tenemos una petición desde la IP: %s para la IP: %s", requestIp, destIp)
-
 	if f.BL.IpIsInBlackList(requestIp) {
 
 		log.Print("Se bloqueo la conexion por estar en blacklist la ip: " + requestIp)
