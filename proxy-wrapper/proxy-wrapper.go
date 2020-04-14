@@ -29,9 +29,9 @@ func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bo
 	destIp := filter_chain.GetHostIp(r)
 	pathDest := filter_chain.GetPath(r)
 
-	bl, error := db.GetBlacklist()
+	bl, _ := db.GetBlacklist()
 
-	hc, error := db.GetConfiguration(originIP)
+	hc, _ := db.GetConfiguration(originIP)
 
 	log.Printf("We have a request from the IP: %s to IP: %s", originIP, destIp)
 
