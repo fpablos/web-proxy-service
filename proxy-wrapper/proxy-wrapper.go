@@ -36,11 +36,11 @@ func OnAccept(ctx *httpproxy.Context, w http.ResponseWriter, r *http.Request) bo
 	log.Printf("We have a request from the IP: %s to IP: %s", originIP, destIp)
 
 	// If configuration is missing for origin, it is denied by default
-	if error != nil {
-		w.WriteHeader(http.StatusForbidden)
-		w.Write([]byte("403 - You don't have permission"))
-		return true
-	}
+	//if error != nil {
+	//	w.WriteHeader(http.StatusForbidden)
+	//	w.Write([]byte("403 - You don't have permission"))
+	//	return true
+	//}
 
 	hs, _ := db.GetHostStatistics(originIP)
 
