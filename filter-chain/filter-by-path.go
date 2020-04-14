@@ -22,9 +22,9 @@ func (f *ByPathFilter) Execute(chain *Chain, args ...interface{}) bool{
 
 	if maxConnections, status := f.HC.MaxConnectionByPath(destPath); status {
 
-		if currentCountConnections, _ := f.HS.ConnectionsCountByPathSuccessful(destPath); maxConnections >= currentCountConnections  {
+		if currentCountConnections, _ := f.HS.ConnectionsCountByPathSuccessful(destPath); maxConnections <= currentCountConnections  {
 
-			log.Print("Se bloqueo la conexión por superar el máximo permitido para la ruta: " + destPath + "a la IP " + requestIp)
+			log.Print("Se bloqueo la conexión por superar el máximo permitido para la ruta: " + destPath + " a la IP " + requestIp)
 
 			_, error := db.UpdatePathCounter(requestIp, destPath, false)
 			if error != nil {

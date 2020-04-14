@@ -31,7 +31,7 @@ func (f *ByIpPathFilter) Execute(chain *Chain, args ...interface{}) bool{
 		currentCountConnectionsByIp, _ := f.HS.ConnectionsCountByIpSuccessful(destIp);
 		currentCountConnectionsByPath, _ := f.HS.ConnectionsCountByPathSuccessful(destPath)
 
-		if  maxConnectionsByIp >= currentCountConnectionsByIp && maxConnectionsByPath >= currentCountConnectionsByPath {
+		if  maxConnectionsByIp <= currentCountConnectionsByIp && maxConnectionsByPath <= currentCountConnectionsByPath {
 
 			log.Printf("Se bloqueo la conexión por superar el máximo permitido por IP (%s ) y por RUTA : %s", requestIp, destPath)
 

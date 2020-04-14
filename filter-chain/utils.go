@@ -1,7 +1,6 @@
 package filter_chain
 
 import (
-	"fmt"
 	"net"
 	"net/http"
 	s "strings"
@@ -22,13 +21,17 @@ func GetIp(r *http.Request) string{
 
 func GetHostIp(r *http.Request) string{
 	addrs,err := net.LookupIP(r.Host)
-	if err != nil {
-		fmt.Println("Unknown host")
-		// I take it as error
-		return ""
+	if err == nil {
+		// We returns the first in the list of ip's
+		return addrs[0].String()
 	}
-	// We returns the first in the list of ip's
-	return addrs[0].String()
+
+	host, _, err := net.SplitHostPort(r.Host)
+	if err == nil {
+		return host
+	}
+
+	return "Unknown Host"
 }
 
 func GetPath(r *http.Request) string{
